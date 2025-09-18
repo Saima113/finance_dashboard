@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Stock Analytics - Home{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                Find the best with<br>
+                <span class="gradient-text">Stock Analytics</span>
+            </h1>
+            <p class="hero-subtitle">AI-Powered Financial Analysis for Smart Investment Decisions</p>
+            
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="companySearch" 
+                           placeholder="Enter company symbol (e.g., TCS, HDFCBANK, INFOSYS)" 
+                           onkeypress="handleEnter(event)">
+                    <button class="search-btn" onclick="searchCompany()">
+                        <i class="fas fa-search"></i>
+                        Analyze
+                    </button>
+                </div>
+                
+                <div class="examples">
+                    <h3>For Example:</h3>
+                    <div class="example-companies">
+                        <a href="/pages/company.php?id=HDFCBANK" class="company-tag">HDFC Bank</a>
+                        <a href="/pages/company.php?id=TCS" class="company-tag">TCS</a>
+                        <a href="/pages/company.php?id=INFOSYS" class="company-tag">Infosys</a>
+                        <a href="/pages/company.php?id=WIPRO" class="company-tag">Wipro</a>
+                        <a href="/pages/company.php?id=SBILIFE" class="company-tag">SBI Life Insurance</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="features-section">
+    <div class="container">
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3>Real-time Analysis</h3>
+                <p>Get instant financial insights powered by machine learning algorithms analyzing balance sheets, profit & loss, and cash flow statements.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3>AI-Driven Insights</h3>
+                <p>Our ML engine automatically categorizes financial metrics into pros and cons, helping you make informed investment decisions.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h3>Comprehensive Coverage</h3>
+                <p>Analyze all Nifty 100 companies with detailed financial health assessments and performance comparisons.</p>
+            </div>
+        </div>
+        
+        <div class="cta-section">
+            <a href="/view_all.html" class="cta-btn">
+                <i class="fas fa-list"></i>
+                View All Companies
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function searchCompany() {
+        const symbol = document.getElementById('companySearch').value.trim().toUpperCase();
+        if (symbol) {
+            showLoading();
+            window.location.href = `/pages/company.php?id=${symbol}`;
+        } else {
+            alert('Please enter a company symbol');
+        }
+    }
+    
+    function handleEnter(event) {
+        if (event.key === 'Enter') {
+            searchCompany();
+        }
+    }
+    
+    function showLoading() {
+        document.getElementById('companySearch').value = 'Analyzing...';
+        document.getElementById('companySearch').disabled = true;
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('companySearch').focus();
+    });
+</script>
+{% endblock %}

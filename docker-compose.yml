@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ml_financial_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ml
+      MYSQL_USER: mluser
+      MYSQL_PASSWORD: mlpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+  web_app:
+    build: .
+    container_name: ml_financial_app
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=mluser
+      - DB_PASSWORD=mlpassword
+      - DB_NAME=finance
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

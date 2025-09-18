@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}All Companies / Nifty 100 - Stock Analytics{% endblock %}
+
+{% block content %}
+<div class="view-all-page">
+    <div class="container">
+        <div class="page-header">
+            <div class="breadcrumb">
+                <a href="/" class="breadcrumb-link">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-current">All Companies</span>
+            </div>
+            
+            <h1 class="page-title">All Companies / Nifty 100</h1>
+            <p class="page-subtitle">Complete financial analysis of Nifty 100 companies</p>
+        </div>
+        
+        <div class="controls-section">
+            <div class="search-controls">
+                <div class="filter-group">
+                    <input type="text" class="filter-input" id="companyFilter" 
+                           placeholder="Search companies..." onkeyup="filterCompanies()">
+                    <i class="fas fa-search filter-icon"></i>
+                </div>
+                
+                <div class="view-controls">
+                    <button class="view-btn active" onclick="setView('table')" data-view="table">
+                        <i class="fas fa-table"></i>
+                        Table
+                    </button>
+                    <button class="view-btn" onclick="setView('grid')" data-view="grid">
+                        <i class="fas fa-th"></i>
+                        Grid
+                    </button>
+                </div>
+            </div>
+            
+            <div class="stats-summary">
+                <div class="stat-item">
+                    <span class="stat-number">{{ companies|length }}</span>
+                    <span class="stat-label">Total Companies</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ companies|selectattr('analysis_date')|list|length }}</span>
+                    <span class="stat-label">Analyzed</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ companies|rejectattr('analysis_date')|list|length }}</span>
+                    <span class="stat-label">Pending</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="companies-container">
+            <!-- Table View -->
+            <div id="tableView" class="table-view active">
+                <div class="table-wrapper">
+                    <table class="companies-table" id="companiesTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">
+                                    Symbol <i class="fas fa-sort"></i>
+                                </th>
+                                <th>Logo</th>
+                                <th onclick="sortTable(2)">
+                                    Company Name <i class="fas fa-sort"></i>
+                                </th>
+                                <th onclick="sortTable(3)">
+                                    Status <i class="fas fa-sort"></i>
+                                </th>
+                                <th onclick="sortTable(4)">
+                                    Last Updated <i class="fas fa-sort"></i>
+                                </th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for company in companies %}
+                            <tr class="company-row" data-symbol="{{ company.symbol }}">
+                                <td class="symbol-cell">
+                                    <strong>{{ company.symbol }}</strong>
+                                </td>
+                                <td class="logo-cell">
+                                    <div class="company-logo">
+                                        {{ company.symbol[:2] }}
+                                    </div>
+                                </td>
+                                <td class="name-cell">
+                                    <div class="company-name">{{ company.company_name or company.symbol }}</div>
+                                </td>
+                                <td class="status-cell">
+                                    {% if company.analysis_date %}
+                                    <span class="status-badge analyzed">
+                                        <i class="fas fa-check"></i> Analyzed
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge pending">
+                                        <i class="fas fa-clock"></i> Pending
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="date-cell">
+                                    {% if company.analysis_date %}
+                                    <span class="date-text">{{ company.analysis_date.strftime('%Y-%m-%d') }}</span>
+                                    <span class="time-text">{{ company.analysis_date.strftime('%H:%M') }}</span>
+                                    {% else %}
+                                    <span class="no-date">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="actions-cell">
+                                    <button class="action-btn small" onclick="viewCompany('{{ company.symbol }}')">
+                                        <i class="fas fa-eye"></i>
+                                        View
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Grid View -->
+            <div id="gridView" class="grid-view">
+                <div class="companies-grid">
+                    {% for company in companies %}
+                    <div class="company-card" data-symbol="{{ company.symbol }}" onclick="viewCompany('{{ company.symbol }}')">
+                        <div class="card-header">
+                            <div class="company-logo">{{ company.symbol[:2] }}</div>
+                            <div class="company-meta">
+                                <h3 class="company-name">{{ company.company_name or company.symbol }}</h3>
+                                <div class="company-symbol">{{ company.symbol }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-status">
+                            {% if company.analysis_date %}
+                            <span class="status-badge analyzed">
+                                <i class="fas fa-check"></i> Analyzed
+                            </span>
+                            <div class="analysis-date">{{ company.analysis_date.strftime('%Y-%m-%d %H:%M') }}</div>
+                            {% else %}
+                            <span class="status-badge pending">
+                                <i class="fas fa-clock"></i> Pending Analysis
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-actions">
+                            <button class="card-btn">
+                                <i class="fas fa-chart-line"></i>
+                                View Analysis
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            {% if not companies %}
+            <div class="empty-state">
+                <i class="fas fa-database"></i>
+                <h3>No Companies Found</h3>
+                <p>No companies have been loaded yet. Please run the analysis first.</p>
+                <a href="/" class="action-btn primary">Go to Search</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentSort = { column: -1, direction: 'asc' };
+    
+    function viewCompany(symbol) {
+        window.location.href = `/pages/company.php?id=${symbol}`;
+    }
+    
+    function filterCompanies() {
+        const filter = document.getElementById('companyFilter').value.toUpperCase();
+        const tableRows = document.querySelectorAll('#companiesTable tbody tr');
+        const gridCards = document.querySelectorAll('.company-card');
+        
+        // Filter table rows
+        tableRows.forEach(row => {
+            const symbol = row.dataset.symbol;
+            const name = row.querySelector('.company-name').textContent;
+            const visible = symbol.includes(filter) || name.toUpperCase().includes(filter);
+            row.style.display = visible ? '' : 'none';
+        });
+        
+        // Filter grid cards
+        gridCards.forEach(card => {
+            const symbol = card.dataset.symbol;
+            const name = card.querySelector('.company-name').textContent;
+            const visible = symbol.includes(filter) || name.toUpperCase().includes(filter);
+            card.style.display = visible ? 'block' : 'none';
+        });
+    }
+    
+    function setView(viewType) {
+        const tableView = document.getElementById('tableView');
+        const gridView = document.getElementById('gridView');
+        const buttons = document.querySelectorAll('.view-btn');
+        
+        buttons.forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`[data-view="${viewType}"]`).classList.add('active');
+        
+        if (viewType === 'table') {
+            tableView.classList.add('active');
+            gridView.classList.remove('active');
+        } else {
+            gridView.classList.add('active');
+            tableView.classList.remove('active');
+        }
+    }
+    
+    function sortTable(columnIndex) {
+        const table = document.getElementById('companiesTable');
+        const tbody = table.tBodies[0];
+        const rows = Array.from(tbody.rows);
+        
+        // Determine sort direction
+        const direction = (currentSort.column === columnIndex && currentSort.direction === 'asc') ? 'desc' : 'asc';
+        currentSort = { column: columnIndex, direction };
+        
+        // Sort rows
+        rows.sort((a, b) => {
+            const aVal = a.cells[columnIndex].textContent.trim();
+            const bVal = b.cells[columnIndex].textContent.trim();
+            
+            if (direction === 'asc') {
+                return aVal.localeCompare(bVal);
+            } else {
+                return bVal.localeCompare(aVal);
+            }
+        });
+        
+        // Update table
+        rows.forEach(row => tbody.appendChild(row));
+        
+        // Update sort indicators
+        const headers = table.querySelectorAll('th i.fas');
+        headers.forEach(icon => {
+            icon.className = 'fas fa-sort';
+        });
+        
+        const currentHeader = table.querySelectorAll('th')[columnIndex].querySelector('i');
+        if (currentHeader) {
+            currentHeader.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+        }
+    }
+    
+    // Auto-refresh every 60 seconds
+    setInterval(function() {
+        window.location.reload();
+    }, 60000);
+</script>
+{% endblock %}

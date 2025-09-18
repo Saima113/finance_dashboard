@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if analysis.company %}{{ analysis.company.company_name }}{% else %}{{ company_id }}{% endif %} - Financial Analysis
+{% endblock %}
+
+{% block content %}
+<div class="company-analysis-page">
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/" class="breadcrumb-link">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">{{ company_id }}</span>
+        </div>
+        
+        <div class="company-header">
+            <div class="company-info">
+                <div class="company-logo-large">
+                    {{ company_id[:2] }}
+                </div>
+                <div class="company-details">
+                    <h1 class="company-name">
+                        {% if analysis.company %}{{ analysis.company.company_name }}{% else %}{{ company_id }}{% endif %}
+                    </h1>
+                    <div class="company-symbol">Symbol: {{ company_id }}</div>
+                    <div class="last-updated">
+                        Last Updated: <span id="lastUpdated">{{ moment().format('YYYY-MM-DD HH:mm') }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            {% if analysis.insights %}
+            <div class="insights-banner">
+                <i class="fas fa-lightbulb"></i>
+                <span>{{ analysis.insights }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if analysis.pros or analysis.cons %}
+        <div class="analysis-content">
+            <div class="analysis-grid">
+                <div class="pros-section">
+                    <div class="section-header">
+                        <i class="fas fa-check-circle section-icon"></i>
+                        <h2 class="section-title">Strengths</h2>
+                        <span class="count-badge">{{ analysis.pros|length }}</span>
+                    </div>
+                    
+                    {% if analysis.pros %}
+                    <ul class="metrics-list">
+                        {% for pro in analysis.pros %}
+                        <li class="metric-item pros-item">
+                            <i class="fas fa-arrow-up metric-icon"></i>
+                            <span class="metric-text">{{ pro }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="no-data">
+                        <i class="fas fa-info-circle"></i>
+                        <p>No positive indicators found or analysis pending</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="cons-section">
+                    <div class="section-header">
+                        <i class="fas fa-exclamation-triangle section-icon"></i>
+                        <h2 class="section-title">Areas of Concern</h2>
+                        <span class="count-badge">{{ analysis.cons|length }}</span>
+                    </div>
+                    
+                    {% if analysis.cons %}
+                    <ul class="metrics-list">
+                        {% for con in analysis.cons %}
+                        <li class="metric-item cons-item">
+                            <i class="fas fa-arrow-down metric-icon"></i>
+                            <span class="metric-text">{{ con }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="no-data">
+                        <i class="fas fa-info-circle"></i>
+                        <p>No concerning indicators found or analysis pending</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="loading-section">
+            <div class="loading-spinner"></div>
+            <h3>Analyzing {{ company_id }}...</h3>
+            <p>Please wait while we fetch and analyze the latest financial data.</p>
+            <div class="loading-steps">
+                <div class="step active">
+                    <i class="fas fa-download"></i>
+                    <span>Fetching Data</span>
+                </div>
+                <div class="step">
+                    <i class="fas fa-cogs"></i>
+                    <span>ML Analysis</span>
+                </div>
+                <div class="step">
+                    <i class="fas fa-save"></i>
+                    <span>Storing Results</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="action-buttons">
+            <a href="/view_all.html" class="action-btn primary">
+                <i class="fas fa-list"></i>
+                View All Companies
+            </a>
+            <a href="javascript:void(0)" onclick="refreshAnalysis()" class="action-btn secondary">
+                <i class="fas fa-sync-alt"></i>
+                Refresh Analysis
+            </a>
+            <a href="/" class="action-btn outline">
+                <i class="fas fa-search"></i>
+                New Search
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function refreshAnalysis() {
+        showRefreshLoader();
+        fetch(`/api/refresh/${{{ company_id }}}`, {
+            method: 'POST'
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert('Failed to refresh analysis');
+                hideRefreshLoader();
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('Error refreshing analysis');
+            hideRefreshLoader();
+        });
+    }
+    
+    function showRefreshLoader() {
+        const btn = document.querySelector('.action-btn.secondary');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+        btn.disabled = true;
+    }
+    
+    function hideRefreshLoader() {
+        const btn = document.querySelector('.action-btn.secondary');
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Analysis';
+        btn.disabled = false;
+    }
+    
+    // Auto-refresh if no analysis data
+    {% if not analysis.pros and not analysis.cons %}
+    let refreshCount = 0;
+    const maxRefresh = 10;
+    
+    function autoRefresh() {
+        if (refreshCount < maxRefresh) {
+            refreshCount++;
+            setTimeout(function() {
+                window.location.reload();
+            }, 30000); // Refresh every 30 seconds
+        }
+    }
+    
+    autoRefresh();
+    {% endif %}
+    
+    // Update last updated time
+    function updateLastUpdated() {
+        const now = new Date();
+        document.getElementById('lastUpdated').textContent = 
+            now.toLocaleString('en-IN', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+    }
+    
+    setInterval(updateLastUpdated, 60000); // Update every minute
+</script>
+{% endblock %}
